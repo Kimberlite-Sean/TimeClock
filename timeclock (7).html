@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Time Clock System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <div id="app" class="container mx-auto px-4 py-8 max-w-4xl">
+        <!-- Login Screen -->
+        <div id="loginScreen" class="bg-white rounded-lg shadow-xl p-8 max-w-md mx-auto">
+            <div class="text-center mb-8">
+                <h1 class="text-3xl font-bold text-indigo-600 mb-2">Time Clock System</h1>
+                <p class="text-gray-600">Sign in to track your hours</p>
+            </div>
+            
+            <div id="loginForm">
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Username</label>
+                    <input type="text" id="username" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-500" placeholder="Enter username">
+                </div>
+                
+                <div class="mb-6">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Password</label>
+                    <input type="password" id="password" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-500" placeholder="Enter password">
+                </div>
+                
+                <div id="loginError" class="hidden mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm"></div>
+                
+                <button onclick="login()" class="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition font-semibold">
+                    Sign In
+                </button>
+                
+                <div class="mt-6 p-4 bg-blue-50 rounded-lg">
+                    <p class="text-xs text-gray-600 font-semibold mb-2">Demo Accounts:</p>
+                    <p class="text-xs text-gray-600">👤 admin / password123</p>
+                    <p class="text-xs text-gray-600">👤 employee / pass456</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Dashboard -->
+        <div id="dashboardScreen" class="hidden">
+            <div class="bg-white rounded-lg shadow-xl p-8">
+                <div class="flex justify-between items-center mb-8">
+                    <div>
+                        <h1 class="text-3xl font-bold text-indigo-600">Welcome, <span id="displayName"></span></h1>
+                        <p class="text-gray-600" id="currentDateTime"></p>
+                    </div>
+                    <button onclick="logout()" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition">
+                        Logout
+                    </button>
+                </div>
+
+                <!-- Employee Dashboard -->
+                <div id="employeeDashboard">
+                    <!-- Clock Status -->
+                    <div class="mb-8 p-6 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg text-white">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <p class="text-sm opacity-90">Current Status</p>
+                                <p class="text-2xl font-bold" id="clockStatus">Clocked Out</p>
+                                <p class="text-sm mt-1" id="sessionTime"></p>
+                            </div>
+                            <div>
+                                <button id="clockButton" onclick="toggleClock()" class="bg-white text-indigo-600 px-8 py-3 rounded-lg font-bold hover:bg-gray-100 transition text-lg">
+                                    Clock In
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Today's Summary -->
+                    <div class="mb-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="bg-blue-50 p-4 rounded-lg">
+                            <p class="text-sm text-gray-600">Today's Hours</p>
+                            <p class="text-2xl font-bold text-blue-600" id="todayHours">0:00</p>
+                        </div>
+                        <div class="bg-green-50 p-4 rounded-lg">
+                            <p class="text-sm text-gray-600">This Week</p>
+                            <p class="text-2xl font-bold text-green-600" id="weekHours">0:00</p>
+                        </div>
+                        <div class="bg-purple-50 p-4 rounded-lg">
+                            <p class="text-sm text-gray-600">Unpaid Sessions</p>
+                            <p class="text-2xl font-bold text-purple-600" id="totalSessions">0</p>
+                        </div>
+                    </div>
+
+                    <!-- Time Records -->
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-800 mb-4">Recent Time Entries (Unpaid)</h2>
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Date</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Clock In</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Clock Out</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Duration</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="timeRecords" class="divide-y divide-gray-200">
+                                    <tr>
+                                        <td colspan="4" class="px-4 py-8 text-center text-gray-500">No time entries yet</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Admin Dashboard -->
+                <div id="adminDashboard" class="hidden">
+                    <!-- Admin Controls -->
+                    <div class="mb-6 flex gap-4 flex-wrap">
+                        <button onclick="showAdminView('all')" id="viewAllBtn" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">
+                            All Users
+                        </button>
+                        <button onclick="showAdminView('unpaid')" id="viewUnpaidBtn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">
+                            Unpaid Only
+                        </button>
+                        <button onclick="showAdminView('paid')" id="viewPaidBtn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">
+                            Paid History
+                        </button>
+                        <button onclick="showAddTimeModal()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
+                            + Add Time Entry
+                        </button>
+                        <button onclick="showManageUsersModal()" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition ml-auto">
+                            Manage Users
+                        </button>
+                    </div>
+
+                    <!-- Filter by User -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Filter by User:</label>
+                        <select id="userFilter" onchange="updateAdminView()" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-500">
+                            <option value="all">All Users</option>
+                        </select>
+                    </div>
+
+                    <!-- Summary Cards -->
+                    <div class="mb-8 grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div class="bg-blue-50 p-4 rounded-lg">
+                            <p class="text-sm text-gray-600">Total Unpaid Hours</p>
+                            <p class="text-2xl font-bold text-blue-600" id="adminUnpaidHours">0:00</p>
+                        </div>
+                        <div class="bg-green-50 p-4 rounded-lg">
+                            <p class="text-sm text-gray-600">Total Paid Hours</p>
+                            <p class="text-2xl font-bold text-green-600" id="adminPaidHours">0:00</p>
+                        </div>
+                        <div class="bg-purple-50 p-4 rounded-lg">
+                            <p class="text-sm text-gray-600">Active Employees</p>
+                            <p class="text-2xl font-bold text-purple-600" id="activeEmployees">0</p>
+                        </div>
+                        <div class="bg-orange-50 p-4 rounded-lg">
+                            <p class="text-sm text-gray-600">Unpaid Entries</p>
+                            <p class="text-2xl font-bold text-orange-600" id="unpaidEntries">0</p>
+                        </div>
+                    </div>
+
+                    <!-- Admin Time Records -->
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-800 mb-4">Unpaid Hours by Employee</h2>
+                        <div class="mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="unpaidByUser">
+                            <!-- Will be populated by JavaScript -->
+                        </div>
+                        
+                        <h2 class="text-xl font-bold text-gray-800 mb-4">Time Entries</h2>
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Employee</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Date</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Clock In</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Clock Out</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Duration</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Status</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="adminTimeRecords" class="divide-y divide-gray-200">
+                                    <tr>
+                                        <td colspan="7" class="px-4 py-8 text-center text-gray-500">No time entries yet</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add/Edit Time Entry Modal -->
+        <div id="timeEntryModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white rounded-lg shadow-xl p-8 max-w-md w-full mx-4">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6" id="modalTitle">Add Time Entry</h2>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Employee</label>
+                        <select id="modalEmployee" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-500">
+                            <option value="">Select Employee</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Date</label>
+                        <input type="date" id="modalDate" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-500">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Clock In Time</label>
+                        <input type="time" id="modalClockIn" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-500">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Clock Out Time</label>
+                        <input type="time" id="modalClockOut" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-500">
+                    </div>
+                    
+                    <div id="modalError" class="hidden p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm"></div>
+                </div>
+                
+                <div class="flex gap-3 mt-6">
+                    <button onclick="saveTimeEntry()" class="flex-1 bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition font-semibold">
+                        Save
+                    </button>
+                    <button onclick="closeTimeEntryModal()" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400 transition font-semibold">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Manage Users Modal -->
+        <div id="manageUsersModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white rounded-lg shadow-xl p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">Manage Users</h2>
+                
+                <!-- Add New User Section -->
+                <div class="mb-6 p-4 bg-gray-50 rounded-lg">
+                    <h3 class="text-lg font-semibold text-gray-700 mb-4">Add New User</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <input type="text" id="newUsername" placeholder="Username" class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-500">
+                        <input type="text" id="newDisplayName" placeholder="Display Name" class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-500">
+                        <input type="password" id="newPassword" placeholder="Password" class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-500">
+                        <div class="flex items-center px-3 py-2">
+                            <input type="checkbox" id="newIsAdmin" class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                            <label for="newIsAdmin" class="ml-2 text-sm font-medium text-gray-700">Admin User</label>
+                        </div>
+                    </div>
+                    <div id="addUserError" class="hidden mt-3 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm"></div>
+                    <button onclick="addNewUser()" class="mt-3 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-semibold">
+                        Add User
+                    </button>
+                </div>
+                
+                <!-- Existing Users List -->
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-700 mb-4">Existing Users</h3>
+                    <div class="space-y-3" id="usersList">
+                        <!-- Users will be populated here -->
+                    </div>
+                </div>
+                
+                <div class="flex gap-3 mt-6">
+                    <button onclick="closeManageUsersModal()" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400 transition font-semibold">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit User Modal -->
+        <div id="editUserModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white rounded-lg shadow-xl p-8 max-w-md w-full mx-4">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">Edit User</h2>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Username</label>
+                        <input type="text" id="editUsername" disabled class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Display Name</label>
+                        <input type="text" id="editDisplayName" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-500">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">New Password (leave blank to keep current)</label>
+                        <input type="password" id="editPassword" placeholder="Enter new password" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-500">
+                    </div>
+                    
+                    <div class="flex items-center">
+                        <input type="checkbox" id="editIsAdmin" class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                        <label for="editIsAdmin" class="ml-2 text-sm font-medium text-gray-700">Admin User</label>
+                    </div>
+                    
+                    <div id="editUserError" class="hidden p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm"></div>
+                </div>
+                
+                <div class="flex gap-3 mt-6">
+                    <button onclick="saveEditUser()" class="flex-1 bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition font-semibold">
+                        Save Changes
+                    </button>
+                    <button onclick="closeEditUserModal()" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400 transition font-semibold">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Demo user database - will be loaded from localStorage
+        let users = {
+            'admin': { password: 'password123', name: 'Admin User', isAdmin: true },
+            'employee': { password: 'pass456', name: 'John Doe', isAdmin: false }
+        };
+
+        let currentUser = null;
+        let clockedIn = false;
+        let clockInTime = null;
+        let sessionInterval = null;
+        let timeRecords = [];
+        let adminView = 'unpaid'; // 'all', 'unpaid', 'paid'
+        let editingRecordId = null; // Track which record is being edited
+
+        // Load saved data from localStorage
+        function loadData() {
+            const saved = localStorage.getItem('timeClockData');
+            if (saved) {
+                const data = JSON.parse(saved);
+                timeRecords = data.timeRecords || [];
+                
+                // Load users if saved
+                if (data.users) {
+                    users = data.users;
+                }
+                
+                // Add paid status to old records
+                timeRecords = timeRecords.map(record => ({
+                    ...record,
+                    paid: record.paid || false,
+                    id: record.id || generateId()
+                }));
+                
+                if (data.currentUser) {
+                    currentUser = data.currentUser;
+                    if (data.clockedIn && !currentUser.isAdmin) {
+                        clockedIn = true;
+                        clockInTime = new Date(data.clockInTime);
+                        startSessionTimer();
+                    }
+                }
+            }
+        }
+
+        // Generate unique ID
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2);
+        }
+
+        // Save data to localStorage
+        function saveData() {
+            const data = {
+                currentUser,
+                clockedIn,
+                clockInTime: clockInTime ? clockInTime.toISOString() : null,
+                timeRecords,
+                users
+            };
+            localStorage.setItem('timeClockData', JSON.stringify(data));
+        }
+
+        // Login function
+        function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const errorDiv = document.getElementById('loginError');
+
+            if (!username || !password) {
+                errorDiv.textContent = 'Please enter both username and password';
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+
+            if (users[username] && users[username].password === password) {
+                currentUser = { 
+                    username, 
+                    name: users[username].name,
+                    isAdmin: users[username].isAdmin 
+                };
+                errorDiv.classList.add('hidden');
+                showDashboard();
+            } else {
+                errorDiv.textContent = 'Invalid username or password';
+                errorDiv.classList.remove('hidden');
+            }
+        }
+
+        // Logout function
+        function logout() {
+            if (clockedIn && !currentUser.isAdmin) {
+                if (!confirm('You are currently clocked in. Clocking out will end your session. Continue?')) {
+                    return;
+                }
+                toggleClock();
+            }
+            currentUser = null;
+            clockedIn = false;
+            clockInTime = null;
+            document.getElementById('dashboardScreen').classList.add('hidden');
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+            saveData();
+        }
+
+        // Show dashboard
+        function showDashboard() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('dashboardScreen').classList.remove('hidden');
+            document.getElementById('displayName').textContent = currentUser.name;
+            updateDateTime();
+            setInterval(updateDateTime, 1000);
+            
+            if (currentUser.isAdmin) {
+                document.getElementById('employeeDashboard').classList.add('hidden');
+                document.getElementById('adminDashboard').classList.remove('hidden');
+                setupAdminEventListeners(); // Set up event listeners once
+                populateUserFilter();
+                updateAdminView();
+            } else {
+                document.getElementById('employeeDashboard').classList.remove('hidden');
+                document.getElementById('adminDashboard').classList.add('hidden');
+                updateDashboard();
+                if (clockedIn) {
+                    startSessionTimer();
+                }
+            }
+        }
+
+        // Update current date/time
+        function updateDateTime() {
+            const now = new Date();
+            document.getElementById('currentDateTime').textContent = now.toLocaleString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+        }
+
+        // Toggle clock in/out
+        function toggleClock() {
+            if (!clockedIn) {
+                // Clock in
+                clockInTime = new Date();
+                clockedIn = true;
+                document.getElementById('clockStatus').textContent = 'Clocked In';
+                document.getElementById('clockButton').textContent = 'Clock Out';
+                document.getElementById('clockButton').classList.remove('bg-white', 'text-indigo-600');
+                document.getElementById('clockButton').classList.add('bg-red-500', 'text-white');
+                startSessionTimer();
+            } else {
+                // Clock out
+                const clockOutTime = new Date();
+                const duration = (clockOutTime - clockInTime) / 1000 / 60; // minutes
+                
+                timeRecords.unshift({
+                    id: generateId(),
+                    date: clockInTime.toLocaleDateString(),
+                    clockIn: clockInTime.toLocaleTimeString(),
+                    clockOut: clockOutTime.toLocaleTimeString(),
+                    duration: duration,
+                    username: currentUser.username,
+                    displayName: currentUser.name,
+                    paid: false
+                });
+
+                clockedIn = false;
+                clockInTime = null;
+                document.getElementById('clockStatus').textContent = 'Clocked Out';
+                document.getElementById('clockButton').textContent = 'Clock In';
+                document.getElementById('clockButton').classList.remove('bg-red-500', 'text-white');
+                document.getElementById('clockButton').classList.add('bg-white', 'text-indigo-600');
+                document.getElementById('sessionTime').textContent = '';
+                
+                if (sessionInterval) {
+                    clearInterval(sessionInterval);
+                    sessionInterval = null;
+                }
+                
+                updateDashboard();
+            }
+            saveData();
+        }
+
+        // Start session timer
+        function startSessionTimer() {
+            if (sessionInterval) clearInterval(sessionInterval);
+            
+            sessionInterval = setInterval(() => {
+                if (clockInTime) {
+                    const now = new Date();
+                    const elapsed = Math.floor((now - clockInTime) / 1000);
+                    const hours = Math.floor(elapsed / 3600);
+                    const minutes = Math.floor((elapsed % 3600) / 60);
+                    const seconds = elapsed % 60;
+                    document.getElementById('sessionTime').textContent = 
+                        `Session: ${hours}h ${minutes}m ${seconds}s`;
+                }
+            }, 1000);
+        }
+
+        // Update dashboard statistics (Employee)
+        function updateDashboard() {
+            const userRecords = timeRecords.filter(r => r.username === currentUser.username && !r.paid);
+            
+            // Today's hours
+            const today = new Date().toLocaleDateString();
+            const todayRecords = userRecords.filter(r => r.date === today);
+            const todayMinutes = todayRecords.reduce((sum, r) => sum + r.duration, 0);
+            document.getElementById('todayHours').textContent = formatDuration(todayMinutes);
+
+            // This week's hours
+            const weekAgo = new Date();
+            weekAgo.setDate(weekAgo.getDate() - 7);
+            const weekRecords = userRecords.filter(r => new Date(r.date) >= weekAgo);
+            const weekMinutes = weekRecords.reduce((sum, r) => sum + r.duration, 0);
+            document.getElementById('weekHours').textContent = formatDuration(weekMinutes);
+
+            // Total unpaid sessions
+            document.getElementById('totalSessions').textContent = userRecords.length;
+
+            // Update records table
+            updateRecordsTable(userRecords);
+        }
+
+        // Format duration
+        function formatDuration(minutes) {
+            const hours = Math.floor(minutes / 60);
+            const mins = Math.floor(minutes % 60);
+            return `${hours}:${mins.toString().padStart(2, '0')}`;
+        }
+
+        // Update records table (Employee)
+        function updateRecordsTable(records) {
+            const tbody = document.getElementById('timeRecords');
+            
+            if (records.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="px-4 py-8 text-center text-gray-500">No unpaid time entries</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = records.slice(0, 10).map(record => `
+                <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-3 text-sm text-gray-900">${record.date}</td>
+                    <td class="px-4 py-3 text-sm text-gray-900">${record.clockIn}</td>
+                    <td class="px-4 py-3 text-sm text-gray-900">${record.clockOut}</td>
+                    <td class="px-4 py-3 text-sm font-semibold text-indigo-600">${formatDuration(record.duration)}</td>
+                </tr>
+            `).join('');
+        }
+
+        // Admin Functions
+        function populateUserFilter() {
+            const select = document.getElementById('userFilter');
+            const usernames = [...new Set(timeRecords.map(r => r.username))];
+            
+            select.innerHTML = '<option value="all">All Users</option>';
+            usernames.forEach(username => {
+                const user = users[username];
+                const displayName = user ? user.name : username;
+                select.innerHTML += `<option value="${username}">${displayName}</option>`;
+            });
+        }
+
+        function showAdminView(view) {
+            adminView = view;
+            
+            // Update button styles
+            document.getElementById('viewAllBtn').className = view === 'all' 
+                ? 'px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition'
+                : 'px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition';
+            
+            document.getElementById('viewUnpaidBtn').className = view === 'unpaid'
+                ? 'px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition'
+                : 'px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition';
+            
+            document.getElementById('viewPaidBtn').className = view === 'paid'
+                ? 'px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition'
+                : 'px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition';
+            
+            updateAdminView();
+        }
+
+        function updateAdminView() {
+            const userFilter = document.getElementById('userFilter').value;
+            
+            // Filter records
+            let filteredRecords = timeRecords;
+            
+            if (adminView === 'unpaid') {
+                filteredRecords = filteredRecords.filter(r => !r.paid);
+            } else if (adminView === 'paid') {
+                filteredRecords = filteredRecords.filter(r => r.paid);
+            }
+            
+            if (userFilter !== 'all') {
+                filteredRecords = filteredRecords.filter(r => r.username === userFilter);
+            }
+
+            // Update summary stats
+            const unpaidRecords = timeRecords.filter(r => !r.paid);
+            const paidRecords = timeRecords.filter(r => r.paid);
+            
+            const unpaidMinutes = unpaidRecords.reduce((sum, r) => sum + r.duration, 0);
+            const paidMinutes = paidRecords.reduce((sum, r) => sum + r.duration, 0);
+            
+            document.getElementById('adminUnpaidHours').textContent = formatDuration(unpaidMinutes);
+            document.getElementById('adminPaidHours').textContent = formatDuration(paidMinutes);
+            document.getElementById('activeEmployees').textContent = new Set(timeRecords.map(r => r.username)).size;
+            document.getElementById('unpaidEntries').textContent = unpaidRecords.length;
+
+            // Update unpaid hours by user
+            updateUnpaidByUser();
+
+            // Update table
+            updateAdminRecordsTable(filteredRecords);
+        }
+
+        function updateUnpaidByUser() {
+            const container = document.getElementById('unpaidByUser');
+            container.innerHTML = '';
+            
+            // Calculate unpaid hours per user
+            const unpaidByUser = {};
+            timeRecords.forEach(record => {
+                if (!record.paid) {
+                    if (!unpaidByUser[record.username]) {
+                        unpaidByUser[record.username] = {
+                            name: record.displayName || users[record.username]?.name || record.username,
+                            minutes: 0,
+                            count: 0
+                        };
+                    }
+                    unpaidByUser[record.username].minutes += record.duration;
+                    unpaidByUser[record.username].count += 1;
+                }
+            });
+            
+            // Convert to array and sort by hours descending
+            const sortedUsers = Object.keys(unpaidByUser).map(username => ({
+                username,
+                ...unpaidByUser[username]
+            })).sort((a, b) => b.minutes - a.minutes);
+            
+            // Display cards for each user
+            if (sortedUsers.length === 0) {
+                container.innerHTML = '<div class="col-span-full text-center text-gray-500 py-4">No unpaid hours</div>';
+                return;
+            }
+            
+            sortedUsers.forEach(user => {
+                const card = document.createElement('div');
+                card.className = 'bg-gradient-to-br from-orange-50 to-red-50 p-4 rounded-lg border border-orange-200';
+                card.innerHTML = `
+                    <p class="text-sm font-semibold text-gray-700">${user.name}</p>
+                    <p class="text-3xl font-bold text-orange-600 mt-1">${formatDuration(user.minutes)}</p>
+                    <p class="text-xs text-gray-600 mt-1">${user.count} unpaid ${user.count === 1 ? 'entry' : 'entries'}</p>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function updateAdminRecordsTable(records) {
+            const tbody = document.getElementById('adminTimeRecords');
+            
+            if (records.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="px-4 py-8 text-center text-gray-500">No time entries found</td></tr>';
+                return;
+            }
+
+            // Clear existing content
+            tbody.innerHTML = '';
+            
+            // Create rows with actual DOM elements instead of innerHTML strings
+            records.forEach((record, index) => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-gray-50';
+                
+                // Employee name
+                const tdName = document.createElement('td');
+                tdName.className = 'px-4 py-3 text-sm text-gray-900 font-medium';
+                tdName.textContent = record.displayName || record.username;
+                tr.appendChild(tdName);
+                
+                // Date
+                const tdDate = document.createElement('td');
+                tdDate.className = 'px-4 py-3 text-sm text-gray-900';
+                tdDate.textContent = record.date;
+                tr.appendChild(tdDate);
+                
+                // Clock In
+                const tdClockIn = document.createElement('td');
+                tdClockIn.className = 'px-4 py-3 text-sm text-gray-900';
+                tdClockIn.textContent = record.clockIn;
+                tr.appendChild(tdClockIn);
+                
+                // Clock Out
+                const tdClockOut = document.createElement('td');
+                tdClockOut.className = 'px-4 py-3 text-sm text-gray-900';
+                tdClockOut.textContent = record.clockOut;
+                tr.appendChild(tdClockOut);
+                
+                // Duration
+                const tdDuration = document.createElement('td');
+                tdDuration.className = 'px-4 py-3 text-sm font-semibold text-indigo-600';
+                tdDuration.textContent = formatDuration(record.duration);
+                tr.appendChild(tdDuration);
+                
+                // Status
+                const tdStatus = document.createElement('td');
+                tdStatus.className = 'px-4 py-3 text-sm';
+                const statusSpan = document.createElement('span');
+                if (record.paid) {
+                    statusSpan.className = 'px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold';
+                    statusSpan.textContent = 'Paid';
+                } else {
+                    statusSpan.className = 'px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-semibold';
+                    statusSpan.textContent = 'Unpaid';
+                }
+                tdStatus.appendChild(statusSpan);
+                tr.appendChild(tdStatus);
+                
+                // Actions
+                const tdActions = document.createElement('td');
+                tdActions.className = 'px-4 py-3 text-sm';
+                const actionsDiv = document.createElement('div');
+                actionsDiv.className = 'flex gap-2';
+                
+                // Pay button (only if unpaid)
+                if (!record.paid) {
+                    const payBtn = document.createElement('button');
+                    payBtn.className = 'px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition text-xs font-semibold';
+                    payBtn.textContent = 'Pay';
+                    payBtn.addEventListener('click', function() {
+                        console.log('Pay clicked for record:', record.id);
+                        markAsPaid(record.id);
+                    });
+                    actionsDiv.appendChild(payBtn);
+                }
+                
+                // Edit button
+                const editBtn = document.createElement('button');
+                editBtn.className = 'px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition text-xs font-semibold';
+                editBtn.textContent = 'Edit';
+                editBtn.onclick = function() {
+                    showEditTimeModal(record.id);
+                };
+                actionsDiv.appendChild(editBtn);
+                
+                // Delete button
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition text-xs font-semibold';
+                deleteBtn.textContent = 'Delete';
+                deleteBtn.onclick = function() {
+                    deleteTimeEntry(record.id);
+                };
+                actionsDiv.appendChild(deleteBtn);
+                
+                tdActions.appendChild(actionsDiv);
+                tr.appendChild(tdActions);
+                
+                tbody.appendChild(tr);
+            });
+        }
+        
+        // This function is no longer needed but keeping it to avoid errors
+        function setupAdminEventListeners() {
+            // Event listeners are now attached directly in updateAdminRecordsTable
+        }
+
+        function markAsPaid(recordId) {
+            const record = timeRecords.find(r => r.id === recordId);
+            if (record) {
+                record.paid = true;
+                saveData();
+                updateAdminView();
+            }
+        }
+
+        // Modal Functions
+        function showAddTimeModal() {
+            editingRecordId = null;
+            document.getElementById('modalTitle').textContent = 'Add Time Entry';
+            document.getElementById('modalEmployee').value = '';
+            document.getElementById('modalDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('modalClockIn').value = '';
+            document.getElementById('modalClockOut').value = '';
+            document.getElementById('modalError').classList.add('hidden');
+            
+            // Populate employee dropdown
+            const select = document.getElementById('modalEmployee');
+            select.innerHTML = '<option value="">Select Employee</option>';
+            Object.keys(users).forEach(username => {
+                if (!users[username].isAdmin) {
+                    select.innerHTML += `<option value="${username}">${users[username].name}</option>`;
+                }
+            });
+            
+            document.getElementById('timeEntryModal').classList.remove('hidden');
+        }
+
+        function showEditTimeModal(recordId) {
+            const record = timeRecords.find(r => r.id === recordId);
+            
+            if (!record) {
+                alert('Error: Could not find record with ID ' + recordId);
+                return;
+            }
+            
+            try {
+                editingRecordId = recordId;
+                document.getElementById('modalTitle').textContent = 'Edit Time Entry';
+                
+                // Populate employee dropdown
+                const select = document.getElementById('modalEmployee');
+                select.innerHTML = '<option value="">Select Employee</option>';
+                Object.keys(users).forEach(username => {
+                    if (!users[username].isAdmin) {
+                        const selected = username === record.username ? 'selected' : '';
+                        select.innerHTML += `<option value="${username}" ${selected}>${users[username].name}</option>`;
+                    }
+                });
+                
+                // Parse the date and times from the record
+                const dateParts = record.date.split('/');
+                
+                if (dateParts.length === 3) {
+                    const formattedDate = `${dateParts[2]}-${dateParts[0].padStart(2, '0')}-${dateParts[1].padStart(2, '0')}`;
+                    document.getElementById('modalDate').value = formattedDate;
+                } else {
+                    alert('Error: Invalid date format in record');
+                    return;
+                }
+                
+                // Convert 12-hour time to 24-hour format
+                document.getElementById('modalClockIn').value = convertTo24Hour(record.clockIn);
+                document.getElementById('modalClockOut').value = convertTo24Hour(record.clockOut);
+                
+                document.getElementById('modalError').classList.add('hidden');
+                document.getElementById('timeEntryModal').classList.remove('hidden');
+                
+            } catch (error) {
+                console.error('Error in showEditTimeModal:', error);
+                alert('Error opening edit modal: ' + error.message);
+            }
+        }
+
+        function convertTo24Hour(time12h) {
+            const [time, modifier] = time12h.split(' ');
+            let [hours, minutes, seconds] = time.split(':');
+            
+            hours = parseInt(hours, 10);
+            
+            if (hours === 12) {
+                hours = 0;
+            }
+            
+            if (modifier === 'PM') {
+                hours = hours + 12;
+            }
+            
+            return `${hours.toString().padStart(2, '0')}:${minutes}`;
+        }
+
+        function closeTimeEntryModal() {
+            document.getElementById('timeEntryModal').classList.add('hidden');
+            editingRecordId = null;
+        }
+
+        function saveTimeEntry() {
+            const employee = document.getElementById('modalEmployee').value;
+            const date = document.getElementById('modalDate').value;
+            const clockIn = document.getElementById('modalClockIn').value;
+            const clockOut = document.getElementById('modalClockOut').value;
+            const errorDiv = document.getElementById('modalError');
+            
+            // Validation
+            if (!employee || !date || !clockIn || !clockOut) {
+                errorDiv.textContent = 'Please fill in all fields';
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+            
+            // Create Date objects for clock in and out
+            const clockInDate = new Date(`${date}T${clockIn}`);
+            const clockOutDate = new Date(`${date}T${clockOut}`);
+            
+            if (clockOutDate <= clockInDate) {
+                errorDiv.textContent = 'Clock out time must be after clock in time';
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+            
+            // Calculate duration in minutes
+            const duration = (clockOutDate - clockInDate) / 1000 / 60;
+            
+            if (editingRecordId) {
+                // Edit existing record
+                const record = timeRecords.find(r => r.id === editingRecordId);
+                if (record) {
+                    record.username = employee;
+                    record.displayName = users[employee].name;
+                    record.date = clockInDate.toLocaleDateString();
+                    record.clockIn = clockInDate.toLocaleTimeString();
+                    record.clockOut = clockOutDate.toLocaleTimeString();
+                    record.duration = duration;
+                }
+            } else {
+                // Add new record
+                const newRecord = {
+                    id: generateId(),
+                    date: clockInDate.toLocaleDateString(),
+                    clockIn: clockInDate.toLocaleTimeString(),
+                    clockOut: clockOutDate.toLocaleTimeString(),
+                    duration: duration,
+                    username: employee,
+                    displayName: users[employee].name,
+                    paid: false
+                };
+                timeRecords.unshift(newRecord);
+            }
+            
+            saveData();
+            updateAdminView();
+            closeTimeEntryModal();
+        }
+
+        function deleteTimeEntry(recordId) {
+            if (!confirm('Are you sure you want to delete this time entry?')) {
+                return;
+            }
+            
+            const index = timeRecords.findIndex(r => r.id === recordId);
+            
+            if (index !== -1) {
+                timeRecords.splice(index, 1);
+                saveData();
+                updateAdminView();
+            }
+        }
+
+        // User Management Functions
+        function showManageUsersModal() {
+            document.getElementById('newUsername').value = '';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('newDisplayName').value = '';
+            document.getElementById('addUserError').classList.add('hidden');
+            populateUsersList();
+            document.getElementById('manageUsersModal').classList.remove('hidden');
+        }
+
+        function closeManageUsersModal() {
+            document.getElementById('manageUsersModal').classList.add('hidden');
+        }
+
+        function populateUsersList() {
+            const usersList = document.getElementById('usersList');
+            usersList.innerHTML = '';
+            
+            Object.keys(users).forEach(username => {
+                const user = users[username];
+                
+                const userDiv = document.createElement('div');
+                userDiv.className = 'flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg';
+                
+                const infoDiv = document.createElement('div');
+                const adminBadge = user.isAdmin ? '<span class="ml-2 px-2 py-1 bg-purple-100 text-purple-800 rounded-full text-xs font-semibold">Admin</span>' : '';
+                infoDiv.innerHTML = `
+                    <div class="flex items-center">
+                        <p class="font-semibold text-gray-800">${user.name}</p>
+                        ${adminBadge}
+                    </div>
+                    <p class="text-sm text-gray-600">Username: ${username}</p>
+                    <p class="text-sm text-gray-500">Password: ${'•'.repeat(user.password.length)}</p>
+                `;
+                
+                const actionsDiv = document.createElement('div');
+                actionsDiv.className = 'flex gap-2';
+                
+                // Edit button
+                const editBtn = document.createElement('button');
+                editBtn.className = 'px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition text-sm font-semibold';
+                editBtn.textContent = 'Edit';
+                editBtn.onclick = function() {
+                    showEditUserModal(username);
+                };
+                actionsDiv.appendChild(editBtn);
+                
+                // Delete button (only for non-current user)
+                if (username !== currentUser.username) {
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition text-sm font-semibold';
+                    deleteBtn.textContent = 'Delete';
+                    deleteBtn.onclick = function() {
+                        deleteUser(username);
+                    };
+                    actionsDiv.appendChild(deleteBtn);
+                }
+                
+                userDiv.appendChild(infoDiv);
+                userDiv.appendChild(actionsDiv);
+                usersList.appendChild(userDiv);
+            });
+        }
+
+        function addNewUser() {
+            const username = document.getElementById('newUsername').value.trim();
+            const password = document.getElementById('newPassword').value;
+            const displayName = document.getElementById('newDisplayName').value.trim();
+            const isAdmin = document.getElementById('newIsAdmin').checked;
+            const errorDiv = document.getElementById('addUserError');
+            
+            if (!username || !password || !displayName) {
+                errorDiv.textContent = 'Please fill in all fields';
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+            
+            if (users[username]) {
+                errorDiv.textContent = 'Username already exists';
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+            
+            users[username] = {
+                password: password,
+                name: displayName,
+                isAdmin: isAdmin
+            };
+            
+            saveData();
+            document.getElementById('newUsername').value = '';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('newDisplayName').value = '';
+            document.getElementById('newIsAdmin').checked = false;
+            errorDiv.classList.add('hidden');
+            populateUsersList();
+            populateUserFilter(); // Update the filter dropdown
+        }
+
+        let editingUsername = null;
+
+        function showEditUserModal(username) {
+            editingUsername = username;
+            const user = users[username];
+            
+            document.getElementById('editUsername').value = username;
+            document.getElementById('editDisplayName').value = user.name;
+            document.getElementById('editPassword').value = '';
+            document.getElementById('editIsAdmin').checked = user.isAdmin;
+            document.getElementById('editUserError').classList.add('hidden');
+            
+            document.getElementById('editUserModal').classList.remove('hidden');
+        }
+
+        function closeEditUserModal() {
+            document.getElementById('editUserModal').classList.add('hidden');
+            editingUsername = null;
+        }
+
+        function saveEditUser() {
+            if (!editingUsername) return;
+            
+            const displayName = document.getElementById('editDisplayName').value.trim();
+            const newPassword = document.getElementById('editPassword').value;
+            const isAdmin = document.getElementById('editIsAdmin').checked;
+            const errorDiv = document.getElementById('editUserError');
+            
+            if (!displayName) {
+                errorDiv.textContent = 'Display name is required';
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+            
+            const user = users[editingUsername];
+            user.name = displayName;
+            user.isAdmin = isAdmin;
+            
+            if (newPassword && newPassword.trim()) {
+                user.password = newPassword;
+            }
+            
+            saveData();
+            closeEditUserModal();
+            populateUsersList();
+            populateUserFilter();
+            
+            // If editing current user and changing admin status, reload dashboard
+            if (editingUsername === currentUser.username) {
+                currentUser.isAdmin = isAdmin;
+                currentUser.name = displayName;
+            }
+        }
+
+        function deleteUser(username) {
+            if (!confirm(`Are you sure you want to delete user "${users[username].name}"? This will also delete all their time entries.`)) {
+                return;
+            }
+            
+            // Delete user
+            delete users[username];
+            
+            // Delete all time records for this user
+            timeRecords = timeRecords.filter(record => record.username !== username);
+            
+            saveData();
+            populateUsersList();
+            populateUserFilter();
+            updateAdminView();
+        }
+
+        // Handle Enter key on login
+        document.addEventListener('DOMContentLoaded', () => {
+            loadData();
+            
+            if (currentUser) {
+                showDashboard();
+            }
+
+            document.getElementById('username').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') login();
+            });
+            document.getElementById('password').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') login();
+            });
+        });
+    </script>
+</body>
+</html>
